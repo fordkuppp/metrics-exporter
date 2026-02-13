@@ -1,0 +1,10 @@
+[steam]
+api_key = ""
+polling_interval_seconds = 5
+steam_ids = [
+    "",
+]
+[otlp_config]
+enabled = true
+collector_endpoint = "http://localhost:4317"
+protocol = "tonic"

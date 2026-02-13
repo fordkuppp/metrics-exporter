@@ -1,8 +1,7 @@
 use reqwest;
-use std::env;
 use url::Url;
 use anyhow::Result;
-
+use crate::settings::Settings;
 use super::player_summaries_models::PlayerSummariesResponse;
 
 #[derive(Clone)]
@@ -13,8 +12,8 @@ pub struct SteamClient {
 
 impl SteamClient {
     pub fn new() -> Result<Self> {
-        let api_key = env::var("STEAM_API_KEY")?;
-        let api_url = Url::parse(env::var("STEAM_API_URL").unwrap_or("http://api.steampowered.com/".to_string()).as_str())?;
+        let api_key = Settings::get().steam.api_key.clone();
+        let api_url = Url::parse("http://api.steampowered.com/")?;
         Ok(Self { api_key, api_url })
     }
 

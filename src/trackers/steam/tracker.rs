@@ -1,27 +1,20 @@
-use std::env;
 use std::sync::Arc;
 use opentelemetry::KeyValue;
 use tokio::sync::Mutex;
 use tokio_cron_scheduler::{Job, JobScheduler};
-use crate::metrics;
 use crate::trackers::steam::client::SteamClient;
-use anyhow::{Context, Result};
+use anyhow::{Result};
+use crate::settings::Settings;
 
-
-pub struct SteamScheduler {
+pub struct SteamTracker {
     job_scheduler: JobScheduler,
     steam_client: Arc<SteamClient>,
     steam_ids: Vec<String>
 }
 
-impl SteamScheduler {
+impl SteamTracker {
     pub async fn new() -> Result<Self> {
-        let steam_ids = env::var("STEAM_IDS")
-            .context("STEAM_IDS environment variable not set")?
-            .split(',')
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty())
-            .collect::<Vec<_>>();
+        let steam_ids = Settings::get().steam.steam_ids.clone();
         let job_scheduler = JobScheduler::new().await?;
         let steam_client = Arc::new(SteamClient::new()?);
         let scheduler = Self {
@@ -51,7 +44,7 @@ impl SteamScheduler {
                                         KeyValue::new("game_id", game_id.clone()),
                                         KeyValue::new("steam_id", player_info.steam_id.clone())
                                     ];
-                                    metrics::instruments::steam::STEAM_GAME_TIME_TOTAL.add(300, &attributes);
+                                    super::instruments::STEAM_GAME_TIME_TOTAL.add(300, &attributes);
                                     println!("User is still playing game {}, incremented counter by 300s", game_id);
                                 } else {
                                     println!("User switched from game {} to {}. Resetting timer.", last_id, game_id);
@@ -74,7 +67,7 @@ impl SteamScheduler {
             }
 
         }
-        let polling_interval = "1/5 * * * * *"; // Every 5 secs
+        let polling_interval = format!("1/{} * * * * *", Settings::get().steam.polling_interval_seconds);
 
         let steam_ids = self.steam_ids.clone();
 
