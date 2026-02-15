@@ -5,6 +5,7 @@ use tokio_cron_scheduler::{Job, JobScheduler};
 use crate::trackers::steam::client::SteamClient;
 use anyhow::{Result};
 use crate::settings::Settings;
+use log::{info, error};
 
 pub struct SteamTracker {
     job_scheduler: JobScheduler,
@@ -45,24 +46,24 @@ impl SteamTracker {
                                         KeyValue::new("steam_id", player_info.steam_id.clone())
                                     ];
                                     super::instruments::STEAM_GAME_TIME_TOTAL.add(300, &attributes);
-                                    println!("User is still playing game {}, incremented counter by 300s", game_id);
+                                    info!("User is still playing game {}, incremented counter by 300s", game_id);
                                 } else {
-                                    println!("User switched from game {} to {}. Resetting timer.", last_id, game_id);
+                                    info!("User switched from game {} to {}. Resetting timer.", last_id, game_id);
                                 }
                             } else {
-                                println!("User started playing game {}. Starting timer.", game_id);
+                                info!("User started playing game {}. Starting timer.", game_id);
                             }
                             *last_game_id = Some((*game_id.clone()).to_owned());
                         } else {
                             if last_game_id.is_some() {
-                                println!("User stopped playing game. Resetting timer.");
+                                info!("User stopped playing game. Resetting timer.");
                                 *last_game_id = None;
                             }
                         }
                     }
                 },
                 Err(e) => {
-                    eprintln!("Error polling Steam API: {}", e);
+                    error!("Error polling Steam API: {}", e);
                 }
             }
 

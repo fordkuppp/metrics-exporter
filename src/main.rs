@@ -1,13 +1,11 @@
 use crate::trackers::steam::tracker::SteamTracker;
 use anyhow::Result;
-use opentelemetry_otlp::WithExportConfig;
+use log::{info, error};
 use crate::settings::Settings;
 
 mod trackers;
 mod settings;
 mod otlp;
-
-
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -19,13 +17,13 @@ async fn main() -> Result<()> {
 
     match tokio::signal::ctrl_c().await {
         Ok(()) => {
-            println!("Shutdown signal received...");
+            info!("Shutdown signal received...");
         },
         Err(err) => {
-            eprintln!("Unable to listen for shutdown signal: {}", err);
+            error!("Unable to listen for shutdown signal: {}", err);
         },
     }
-    println!("Shutting down...");
+    info!("Shutting down...");
     meter_provider.shutdown()?;
     Ok(())
 }

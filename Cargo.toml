@@ -16,3 +16,4 @@ lazy_static = "1.5.0"
 opentelemetry-stdout = "0.31.0"
 anyhow = "1.0.98"
 config = { version = "0.15.19", features = ["toml"] }
+log = "0.4.29"

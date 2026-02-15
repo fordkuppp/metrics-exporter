@@ -1,6 +1,7 @@
 use reqwest;
 use url::Url;
 use anyhow::Result;
+use log::{debug};
 use crate::settings::Settings;
 use super::player_summaries_models::PlayerSummariesResponse;
 
@@ -32,7 +33,7 @@ impl SteamClient {
             .await?
             .json::<PlayerSummariesResponse>()
             .await?;
-        println!("{:?}", response);
+        debug!("{:?}", response);
         Ok(response)
     }
 }
