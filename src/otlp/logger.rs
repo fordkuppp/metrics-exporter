@@ -34,10 +34,11 @@ pub fn init_logger() -> SdkLoggerProvider {
         .build();
 
     let filter_otel =
-        EnvFilter::new(&config.otlp_config.log_level).add_directive("reqwest=off".parse().unwrap());
+        EnvFilter::new(&config.otlp_config.log_level)
+            .add_directive("reqwest=off".parse().unwrap());
     let otel_layer = layer::OpenTelemetryTracingBridge::new(&provider).with_filter(filter_otel);
 
-    let filter_fmt = EnvFilter::new("info").add_directive("opentelemetry=debug".parse().unwrap());
+    let filter_fmt = EnvFilter::new("debug").add_directive("opentelemetry=debug".parse().unwrap());
     let fmt_layer = tracing_subscriber::fmt::layer()
         .with_thread_names(true)
         .with_filter(filter_fmt);

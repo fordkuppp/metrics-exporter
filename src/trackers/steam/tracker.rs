@@ -48,6 +48,7 @@ impl SteamTracker {
                                     let attributes = [
                                         KeyValue::new("game_id", game_id.clone()),
                                         KeyValue::new("steam_id", player_info.steam_id.clone()),
+                                        KeyValue::new("game_extra_info", player_info.game_extra_info.clone().unwrap_or("Unknown".parse().unwrap()).clone()),
                                     ];
                                     super::instruments::STEAM_GAME_TIME_TOTAL.add(
                                         Settings::get().steam.polling_interval_seconds as u64,
