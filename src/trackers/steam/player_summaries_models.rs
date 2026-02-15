@@ -1,17 +1,14 @@
 use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Default)]
 pub enum CommunityVisibilityState {
     Private = 1,
     Public = 3,
+    #[default]
     Unknown,
 }
 
-impl Default for CommunityVisibilityState {
-    fn default() -> Self {
-        Self::Unknown
-    }
-}
 
 impl TryFrom<u8> for CommunityVisibilityState {
     type Error = ();
@@ -25,6 +22,7 @@ impl TryFrom<u8> for CommunityVisibilityState {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Default)]
 pub enum PlayerState {
     Offline = 0,
     Online = 1,
@@ -33,14 +31,10 @@ pub enum PlayerState {
     Snooze = 4,
     LookingToTrade = 5,
     LookingToPlay = 6,
+    #[default]
     Unknown,
 }
 
-impl Default for PlayerState {
-    fn default() -> Self {
-        Self::Unknown
-    }
-}
 
 impl TryFrom<u8> for PlayerState {
     type Error = (); // Should never have error

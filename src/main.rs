@@ -1,6 +1,6 @@
 use crate::trackers::steam::tracker::SteamTracker;
 use anyhow::Result;
-use log::{info, error};
+use tracing::{info, error};
 use crate::settings::Settings;
 
 mod trackers;
@@ -11,6 +11,7 @@ mod otlp;
 async fn main() -> Result<()> {
     Settings::init()?;
 
+    let _logger = otlp_logger::init().await.expect("Initialized logger");
     let meter_provider = otlp::metrics::init_metrics();
 
     SteamTracker::new().await?;

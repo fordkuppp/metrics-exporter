@@ -5,7 +5,7 @@ use tokio_cron_scheduler::{Job, JobScheduler};
 use crate::trackers::steam::client::SteamClient;
 use anyhow::{Result};
 use crate::settings::Settings;
-use log::{info, error};
+use tracing::{info, error};
 
 pub struct SteamTracker {
     job_scheduler: JobScheduler,
@@ -33,7 +33,7 @@ impl SteamTracker {
         async fn polling_logic(polling_client: Arc<SteamClient>, last_game_id_clone: Arc<Mutex<Option<String>>>, steam_ids: Vec<String>) {
             let steam_ids = steam_ids.clone();
             let steam_id = steam_ids.first().unwrap();
-            let result = polling_client.fetch_player_summaries(&steam_id).await;
+            let result = polling_client.fetch_player_summaries(steam_id).await;
             match result {
                 Ok(response) => {
                     if let Some(player_info) = response.response.players.first() {
@@ -45,8 +45,8 @@ impl SteamTracker {
                                         KeyValue::new("game_id", game_id.clone()),
                                         KeyValue::new("steam_id", player_info.steam_id.clone())
                                     ];
-                                    super::instruments::STEAM_GAME_TIME_TOTAL.add(300, &attributes);
-                                    info!("User is still playing game {}, incremented counter by 300s", game_id);
+                                    super::instruments::STEAM_GAME_TIME_TOTAL.add(Settings::get().steam.polling_interval_seconds as u64, &attributes);
+                                    info!("User is still playing game {}, incremented counter by {}s", game_id, Settings::get().steam.polling_interval_seconds);
                                 } else {
                                     info!("User switched from game {} to {}. Resetting timer.", last_id, game_id);
                                 }
@@ -54,11 +54,9 @@ impl SteamTracker {
                                 info!("User started playing game {}. Starting timer.", game_id);
                             }
                             *last_game_id = Some((*game_id.clone()).to_owned());
-                        } else {
-                            if last_game_id.is_some() {
-                                info!("User stopped playing game. Resetting timer.");
-                                *last_game_id = None;
-                            }
+                        } else if last_game_id.is_some() {
+                            info!("User stopped playing game. Resetting timer.");
+                            *last_game_id = None;
                         }
                     }
                 },
