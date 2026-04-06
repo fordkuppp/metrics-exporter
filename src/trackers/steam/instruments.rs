@@ -5,9 +5,12 @@ use crate::trackers::steam::SharedState;
 
 pub struct SteamInstruments {
     pub game_time_total: Counter<u64>,
+    pub session_count_total: Counter<u64>,
+    pub session_duration_seconds: Histogram<f64>,
     pub summary_latency: Histogram<f64>,
     pub summary_errors_total: Counter<u64>,
-    pub session_active: ObservableGauge<u64>,
+    // Held to keep the observable gauge callback alive.
+    _session_active: ObservableGauge<u64>,
 }
 
 impl SteamInstruments {
@@ -36,6 +39,14 @@ impl SteamInstruments {
                 .u64_counter("steam_game_time_total")
                 .with_description("The total time in seconds spent playing a game.")
                 .build(),
+            session_count_total: meter
+                .u64_counter("steam_session_count_total")
+                .with_description("The total number of gaming sessions started.")
+                .build(),
+            session_duration_seconds: meter
+                .f64_histogram("steam_session_duration_seconds")
+                .with_description("The duration of completed gaming sessions in seconds.")
+                .build(),
             summary_latency: meter
                 .f64_histogram("steam_summary_latency")
                 .with_description(
@@ -48,7 +59,7 @@ impl SteamInstruments {
                     "The total number of failed requests to the steam summary handler.",
                 )
                 .build(),
-            session_active,
+            _session_active: session_active,
         }
     }
 }

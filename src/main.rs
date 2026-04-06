@@ -14,14 +14,17 @@ async fn main() -> Result<()> {
     let logger = otlp::logger::init_logger();
     let meter_provider = otlp::metrics::init_metrics();
 
-    SteamTracker::new()?.start().await;
+    let tracker_handle = SteamTracker::new()?.start();
 
-    match tokio::signal::ctrl_c().await {
-        Ok(()) => {
+    tokio::select! {
+        _ = tokio::signal::ctrl_c() => {
             info!("Shutdown signal received...");
         }
-        Err(err) => {
-            error!("Unable to listen for shutdown signal: {}", err);
+        result = tracker_handle => {
+            match result {
+                Ok(()) => error!("Steam tracker exited unexpectedly"),
+                Err(e) => error!("Steam tracker panicked: {}", e),
+            }
         }
     }
     info!("Shutting down...");
