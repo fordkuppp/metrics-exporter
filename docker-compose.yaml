@@ -1,0 +1,6 @@
+services:
+  metrics-exporter:
+    image: ghcr.io/fordkuppp/metrics-exporter:latest
+    restart: unless-stopped
+    volumes:
+      - ./config/local.toml:/usr/local/metrics-exporter/config/local.toml:ro
