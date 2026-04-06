@@ -38,7 +38,7 @@ impl Settings {
         let settings = Config::builder()
             .add_source(File::with_name("config/default").required(true))
             .add_source(File::with_name("config/local").required(false))
-            .add_source(Environment::with_prefix("APP").separator("_"))
+            .add_source(Environment::with_prefix("APP").prefix_separator("_").separator("__"))
             .build()?
             .try_deserialize()?;
 
