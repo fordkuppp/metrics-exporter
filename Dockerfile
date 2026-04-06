@@ -9,9 +9,9 @@ RUN cargo build --release
 
 # Runner stage
 FROM alpine:3.22.1 AS runner
-WORKDIR /usr/local/steam-metrics
+WORKDIR /usr/local/metrics-exporter
 
-COPY --from=builder /app/target/release/steam-metrics ./
+COPY --from=builder /app/target/release/metrics-exporter ./
 COPY config/default.toml ./config/default.toml
 
-CMD ["./steam-metrics"]
+CMD ["./metrics-exporter"]
