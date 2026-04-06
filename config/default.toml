@@ -1,10 +1,14 @@
+service_name = "metrics-exporter"
+
 [steam]
 api_key = ""
 polling_interval_seconds = 5
 steam_ids = [
     "",
 ]
+
 [otlp_config]
-enabled = true
-collector_endpoint = "http://localhost:4317"
+collector_endpoint = "http://192.168.1.30:4317"
 protocol = "tonic"
+enable_stdout = false
+log_level = "info"

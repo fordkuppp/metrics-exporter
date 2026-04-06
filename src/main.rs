@@ -14,7 +14,7 @@ async fn main() -> Result<()> {
     let logger = otlp::logger::init_logger();
     let meter_provider = otlp::metrics::init_metrics();
 
-    SteamTracker::new().await?;
+    SteamTracker::new()?.start().await;
 
     match tokio::signal::ctrl_c().await {
         Ok(()) => {

@@ -1,26 +1,54 @@
-use lazy_static::lazy_static;
-use opentelemetry::{
-    global,
-    metrics::{Counter, Histogram, Meter},
-};
+use std::sync::{Arc};
+use opentelemetry::metrics::{ObservableGauge};
+use opentelemetry::{global, metrics::{Counter, Histogram}, KeyValue};
+use crate::trackers::steam::SharedState;
 
-lazy_static! {
-    static ref METER: Meter = global::meter("steam_metrics");
+pub struct SteamInstruments {
+    pub game_time_total: Counter<u64>,
+    pub summary_latency: Histogram<f64>,
+    pub summary_errors_total: Counter<u64>,
+    pub session_active: ObservableGauge<u64>,
+}
 
-    pub static ref STEAM_SUMMARY_LATENCY: Histogram<f64> = METER
-        .f64_histogram("steam_summary_latency")
-        .with_description("The duration of requests to the steam summary handler in milliseconds.")
-        .build();
+impl SteamInstruments {
+    pub fn new(state: SharedState) -> SteamInstruments {
+        let meter = global::meter("steam_meter");
+        let state_clone = Arc::clone(&state);
 
-    // Define a counter for errors
-    pub static ref STEAM_SUMMARY_ERRORS_TOTAL: Counter<u64> = METER
-        .u64_counter("steam_summary_errors_total")
-        .with_description("The total number of failed requests to the steam summary handler.")
-        .build();
+        let session_active = meter
+            .u64_observable_gauge("steam_session_active")
+            .with_description("1 if the user is playing this game")
+            .with_callback(move |observer| {
+                if let Ok(current_sessions) = state_clone.lock() {
+                    for (steam_id, session) in current_sessions.iter() {
+                        observer.observe(1, &[
+                            KeyValue::new("steam_id", steam_id.clone()),
+                            KeyValue::new("game_id", session.game_id.clone()),
+                            KeyValue::new("game_name", session.game_name.clone()),
+                        ]);
+                    }
+                }
+            })
+            .build();
 
-    // Define a counter for game time, with `game_id` as a key/attribute
-    pub static ref STEAM_GAME_TIME_TOTAL: Counter<u64> = METER
-        .u64_counter("steam_game_time_total")
-        .with_description("The total time in seconds spent playing a game.")
-        .build();
+        Self {
+            game_time_total: meter
+                .u64_counter("steam_game_time_total")
+                .with_description("The total time in seconds spent playing a game.")
+                .build(),
+            summary_latency: meter
+                .f64_histogram("steam_summary_latency")
+                .with_description(
+                    "The duration of requests to the steam summary handler in milliseconds.",
+                )
+                .build(),
+            summary_errors_total: meter
+                .u64_counter("steam_summary_errors_total")
+                .with_description(
+                    "The total number of failed requests to the steam summary handler.",
+                )
+                .build(),
+            session_active,
+        }
+    }
 }

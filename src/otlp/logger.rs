@@ -1,6 +1,6 @@
 use crate::settings::{OtlpProtocol, Settings};
 use opentelemetry_appender_tracing::layer;
-use opentelemetry_otlp::WithExportConfig;
+use opentelemetry_otlp::{WithExportConfig, WithTonicConfig};
 use opentelemetry_sdk::Resource;
 use opentelemetry_sdk::logs::SdkLoggerProvider;
 use tracing_subscriber::EnvFilter;
@@ -12,14 +12,19 @@ pub fn init_logger() -> SdkLoggerProvider {
     let exporter_builder = opentelemetry_otlp::LogExporter::builder();
 
     let otlp_exporter = match config.otlp_config.protocol {
-        OtlpProtocol::Tonic => exporter_builder
-            .with_tonic()
-            .with_endpoint(config.otlp_config.collector_endpoint.clone())
-            .build()
-            .expect("OTLP Log Tonic build failed"),
+        OtlpProtocol::Tonic => {
+            let mut tonic_builder = exporter_builder
+                .with_tonic()
+                .with_endpoint(config.otlp_config.collector_endpoint.clone());
+            if config.otlp_config.collector_endpoint.starts_with("https") {
+                tonic_builder = tonic_builder
+                    .with_tls_config(tonic::transport::ClientTlsConfig::new().with_enabled_roots());
+            }
+            tonic_builder.build().expect("OTLP Log Tonic build failed")
+        }
         OtlpProtocol::Http => exporter_builder
             .with_http()
-            .with_endpoint(config.otlp_config.collector_endpoint.clone())
+            .with_endpoint(format!("{}/v1/logs", config.otlp_config.collector_endpoint))
             .build()
             .expect("OTLP Log HTTP build failed"),
     };
@@ -34,11 +39,10 @@ pub fn init_logger() -> SdkLoggerProvider {
         .build();
 
     let filter_otel =
-        EnvFilter::new(&config.otlp_config.log_level)
-            .add_directive("reqwest=off".parse().unwrap());
+        EnvFilter::new(&config.otlp_config.log_level).add_directive("reqwest=off".parse().unwrap());
     let otel_layer = layer::OpenTelemetryTracingBridge::new(&provider).with_filter(filter_otel);
 
-    let filter_fmt = EnvFilter::new("debug").add_directive("opentelemetry=debug".parse().unwrap());
+    let filter_fmt = EnvFilter::new(&config.otlp_config.log_level);
     let fmt_layer = tracing_subscriber::fmt::layer()
         .with_thread_names(true)
         .with_filter(filter_fmt);
