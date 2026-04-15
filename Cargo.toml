@@ -18,3 +18,4 @@ tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
 opentelemetry-appender-tracing = "0.31.1"
 tonic = "0.14.5"
+sqlx = { version = "0.8", features = [ "runtime-tokio", "postgres", "chrono" ] }

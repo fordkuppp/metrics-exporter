@@ -3,6 +3,7 @@ use crate::trackers::steam::tracker::SteamTracker;
 use anyhow::Result;
 use tracing::{error, info};
 
+mod db;
 mod otlp;
 mod settings;
 mod trackers;
@@ -11,10 +12,13 @@ mod trackers;
 async fn main() -> Result<()> {
     Settings::init()?;
 
-    let logger = otlp::logger::init_logger();
+    let logger_provider = otlp::logger::init_logger();
     let meter_provider = otlp::metrics::init_metrics();
 
-    let tracker_handle = SteamTracker::new()?.start();
+    let pool = db::init_pool(&Settings::get().database_url).await?;
+    info!("Database migrations applied");
+
+    let tracker_handle = SteamTracker::new(pool)?.start();
 
     tokio::select! {
         _ = tokio::signal::ctrl_c() => {
@@ -30,7 +34,7 @@ async fn main() -> Result<()> {
     info!("Shutting down...");
 
     meter_provider.shutdown()?;
-    logger.shutdown()?;
+    logger_provider.shutdown()?;
 
     Ok(())
 }

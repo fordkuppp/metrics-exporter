@@ -1,4 +1,5 @@
 service_name = "metrics-exporter"
+database_url = "postgres://postgres:password@localhost:6543"
 
 [steam]
 api_key = ""

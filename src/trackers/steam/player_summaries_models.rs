@@ -8,6 +8,16 @@ pub enum CommunityVisibilityState {
     Unknown,
 }
 
+impl CommunityVisibilityState {
+    pub fn as_i16(&self) -> i16 {
+        match self {
+            Self::Private => 1,
+            Self::Public => 3,
+            Self::Unknown => 0,
+        }
+    }
+}
+
 impl TryFrom<u8> for CommunityVisibilityState {
     type Error = ();
     fn try_from(value: u8) -> Result<Self, Self::Error> {
@@ -30,6 +40,21 @@ pub enum PlayerState {
     LookingToPlay = 6,
     #[default]
     Unknown,
+}
+
+impl PlayerState {
+    pub fn as_i16(&self) -> i16 {
+        match self {
+            Self::Offline => 0,
+            Self::Online => 1,
+            Self::Busy => 2,
+            Self::Away => 3,
+            Self::Snooze => 4,
+            Self::LookingToTrade => 5,
+            Self::LookingToPlay => 6,
+            Self::Unknown => -1,
+        }
+    }
 }
 
 impl TryFrom<u8> for PlayerState {

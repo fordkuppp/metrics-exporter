@@ -27,6 +27,7 @@ pub enum OtlpProtocol {
 #[derive(Debug, Deserialize)]
 pub struct Settings {
     pub service_name: String,
+    pub database_url: String,
     pub steam: SteamConfig,
     pub otlp_config: OtlpConfig,
 }

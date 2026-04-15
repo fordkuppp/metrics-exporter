@@ -2,5 +2,26 @@ services:
   metrics-exporter:
     image: ghcr.io/fordkuppp/metrics-exporter:latest
     restart: unless-stopped
+    depends_on:
+      timescaledb:
+        condition: service_healthy
     volumes:
       - ./config/local.toml:/usr/local/metrics-exporter/config/local.toml:ro
+
+  timescaledb:
+    image: timescale/timescaledb-ha:pg18
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: password
+    ports:
+      - "6543:5432"
+    volumes:
+      - timescaledb-data:/home/postgres/pgdata/data
+    healthcheck:
+      test: ["CMD-LINE", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  timescaledb-data:
